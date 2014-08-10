@@ -1,17 +1,16 @@
-var body = require('fd-body-2d');
-var vec2 = require('fd-vec2');
+var body    = require('fd-body-2d');
+var vec2    = require('fd-vec2');
 
-var T = body.types;
+var Result  = require('./Result');
 
-module.exports = checkCollision;
-module.exports.Result = Result;
+var T       = body.types;
 
+module.exports = exports = checkCollision;
+exports.Result = Result;
+
+// Temporary storage for calculations
 var tv1 = vec2.zero();
 var tv2 = vec2.zero();
-
-function Result() {
-    this.mtv = vec2.zero();
-}
 
 function checkCollision(i1, i2, result) {
 
