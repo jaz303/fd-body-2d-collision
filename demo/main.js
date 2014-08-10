@@ -7,7 +7,8 @@ function makeObject(x, y, body) {
 	return {
 		position: vec2(x, y),
 		body: body,
-		velocity: vec2.zero()
+		velocity: vec2.zero(),
+		colliding: false
 	};
 }
 
@@ -79,6 +80,7 @@ window.init = function() {
 
 			objects.forEach(function(obj) {
 				obj.position.adjust_(obj.velocity, dt / 1000);
+				obj.colliding = false;
 			});
 
 			//
@@ -87,6 +89,8 @@ window.init = function() {
 			objects.forEach(function(obj, ix) {
 				if (ix !== focusIx) {
 					if (collision(obj, objects[focusIx], result)) {
+						obj.colliding = true;
+						objects[focusIx].colliding = true;
 						objects[focusIx].position.add_(result.mtv);
 					}
 				}
@@ -115,7 +119,13 @@ window.init = function() {
 
 			objects.forEach(function(obj, ix) {
 
-				ctx.strokeStyle = (ix === focusIx) ? 'green' : 'black';
+				if (obj.colliding) {
+					ctx.strokeStyle = 'red';
+				} else if (ix === focusIx) {
+					ctx.strokeStyle = 'green';
+				} else {
+					ctx.strokeStyle = 'black';
+				}
 
 				switch (obj.body.type) {
 					case T.BODY_AABB:

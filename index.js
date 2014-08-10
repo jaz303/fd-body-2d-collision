@@ -4,6 +4,7 @@ var vec2    = require('fd-vec2');
 var Result  = require('./Result');
 
 var T       = body.types;
+var sqrt    = Math.sqrt;
 
 module.exports = exports = checkCollision;
 exports.Result = Result;
@@ -12,6 +13,15 @@ exports.Result = Result;
 var tv1 = vec2.zero();
 var tv2 = vec2.zero();
 
+/**
+ * Check for collisions between i1 and i2
+ *
+ * Returns true if objects are colliding, false otherwise.
+ *
+ * When a collision is detected, the mtv field of the Result object
+ * will be updated with the vector by which i2 should be moved so
+ * that it is no longer in collision with i1.
+ */
 function checkCollision(i1, i2, result) {
 
     var p1 = i1.position;
@@ -44,6 +54,10 @@ function checkCollision(i1, i2, result) {
         i2 = i1;
         i1 = tmp;
 
+        tmp = p2;
+        p2 = p1;
+        p1 = tmp;
+
         flipped = true;
 
     }
@@ -58,7 +72,7 @@ function checkCollision(i1, i2, result) {
         }
     } else if (b1.type === T.BODY_CIRCLE) {
         if (b2.type === T.BODY_CIRCLE) {
-            //colliding = circle_circle(i1, i2, result);
+            colliding = circle_circle(p1, b1, p2, b2, result);
         } else if (b2.type === T.BODY_LINE_SEGMENT) {
             colliding = circle_lineSegment(i1, i2, result);
         }
@@ -141,12 +155,23 @@ function AABB_lineSegment(obj1, obj2, result) {
     
 }
 
-function circle_circle(obj1, obj2, result) {
+function circle_circle(p1, b1, p2, b2, result) {
+
+    var mtv = result.mtv;
+
+    vec2.sub(p2, p1, mtv);
+
+    var totalRadius = b1.radius + b2.radius;
+    if (mtv.magnitudesq() >= totalRadius*totalRadius) {
+        return false;
+    }
+
+    var pd = mtv.magnitude() - (b1.radius + b2.radius);
     
-    // var distanceSq = b1.pos.distanceSq(b2.pos);
-    // if (distanceSq >= b1.boundRadiusSq + b2.boundRadiusSq) {
-    //  result.colliding = true;
-    // }
+    mtv.normalize_();
+    mtv.mul_(-pd);
+
+    return true;
 
 };
 
