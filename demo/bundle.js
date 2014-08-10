@@ -243,9 +243,9 @@ function checkCollision(i1, i2, result) {
         if (b2.type === T.BODY_AABB) {
             colliding = AABB_AABB(i1, i2, result);
         } else if (b2.type === T.BODY_CIRCLE) {
-            //colliding = AABB_circle(i1, i2, result);
+            colliding = AABB_circle(p1, b1, p2, b2, result);
         } else if (b2.type === T.BODY_LINE_SEGMENT) {
-            //colliding = AABB_lineSegment(i1, i2, result);
+            colliding = AABB_lineSegment(p1, b1, p2, b2, result);
         }
     } else if (b1.type === T.BODY_CIRCLE) {
         if (b2.type === T.BODY_CIRCLE) {
@@ -255,7 +255,7 @@ function checkCollision(i1, i2, result) {
         }
     } else if (b1.type === T.BODY_LINE_SEGMENT) {
         if (b2.type === T.BODY_LINE_SEGMENT) {
-            // colliding = lineSegment_lineSegment(i1, i2, result);
+            colliding = lineSegment_lineSegment(p1, b1, p2, b2, result);
         }
     }
 
@@ -324,12 +324,54 @@ function AABB_AABB(obj1, obj2, result) {
 
 }
 
-function AABB_circle(obj1, obj2, result) {
+function AABB_circle(p1, b1, p2, b2, result) {
+
+    var left    = p1.x,
+        right   = p1.x + b1.width,
+        top     = p1.y,
+        bottom  = p1.y + b1.height,
+        mtv     = result.mtv;
+
+    // find closest point on AABB to circle and store in tv1
+
+    if (p2.x < left) {
+        tv1.x = left;
+    } else if (p2.x > right) {
+        tv1.x = right;
+    } else {
+        tv1.x = p2.x;
+    }
+
+    if (p2.y < top) {
+        tv1.y = top;
+    } else if (p2.y > bottom) {
+        tv1.y = bottom;
+    } else {
+        tv1.y = p2.y;
+    }
+
+    // calculate vector from closest point to circle center
+    // and store in mtv
+
+    vec2.sub(p2, tv1, mtv);
+
+    // hit check
+
+    if (mtv.magnitudesq() >= b2.boundRadiusSq) {
+        return false;
+    }
+
+    var mag = mtv.magnitude();
+
+    mtv.div_(mag);
+    mtv.mul_(-(mag - b2.radius));
+
+    return true;
 
 }
 
 function AABB_lineSegment(obj1, obj2, result) {
-    
+    return false;
 }
 
 function circle_circle(p1, b1, p2, b2, result) {
@@ -343,10 +385,10 @@ function circle_circle(p1, b1, p2, b2, result) {
         return false;
     }
 
-    var pd = mtv.magnitude() - (b1.radius + b2.radius);
+    var mag = mtv.magnitude();
     
-    mtv.normalize_();
-    mtv.mul_(-pd);
+    mtv.div_(mag);
+    mtv.mul_(-(mag - totalRadius));
 
     return true;
 
@@ -384,7 +426,7 @@ function circle_lineSegment(circle, segment, result) {
 };
 
 function lineSegment_lineSegment(obj1, obj2, result) {
-    
+    return false;
 }
 
 },{"./Result":"/Users/jason/dev/projects/fd-body-2d-collision/Result.js","fd-body-2d":"/Users/jason/dev/projects/fd-body-2d-collision/node_modules/fd-body-2d/index.js","fd-vec2":"/Users/jason/dev/projects/fd-body-2d-collision/node_modules/fd-vec2/index.js"}],"/Users/jason/dev/projects/fd-body-2d-collision/node_modules/fd-body-2d/index.js":[function(require,module,exports){
