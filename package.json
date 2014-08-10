@@ -1,0 +1,30 @@
+{
+  "name": "fd-body-2d-collision",
+  "version": "0.0.0",
+  "description": "Collision detection between various 2D bodies",
+  "main": "index.js",
+  "dependencies": {
+    "fd-body-2d": "^0.0.1",
+    "fd-vec2": "^1.0.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jaz303/fd-body-2d-collision.git"
+  },
+  "keywords": [
+    "collision",
+    "2d",
+    "vector",
+    "game"
+  ],
+  "author": "Jason Frame <jason@onehackoranother.com> (http://jasonframe.co.uk)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jaz303/fd-body-2d-collision/issues"
+  },
+  "homepage": "https://github.com/jaz303/fd-body-2d-collision"
+}
