@@ -13,6 +13,7 @@ exports.Result = Result;
 var tv1 = vec2.zero();
 var tv2 = vec2.zero();
 var tv3 = vec2.zero();
+var tv4 = vec2.zero();
 
 /**
  * Check for collisions between i1 and i2
@@ -282,6 +283,9 @@ function lineSegment_lineSegment(p1, b1, p2, b2, result) {
 //
 // Internal
 
+// TODO: this function should test for an intersection and store the
+// point of intersection in result vector.
+// Then main collision test calculate the mtv (which isn't always needed)
 function _collideLineSegments(s1, d1, s2, d2, result) {
 
     var cross = d1.x * d2.y - d1.y * d2.x;
@@ -298,49 +302,57 @@ function _collideLineSegments(s1, d1, s2, d2, result) {
     var u = (tv3.x * d1.y - tv3.y * d1.x) / cross;
     if (u < 0 || u > 1) return false;
 
-    //     intersection = a1 + t * b;
+    // Calculate mtv
 
-    result.mtv.x = result.mtv.y = 0;
+    // step 1 - intersection point
+    
+    vec2.adjust(s1, d1, t, tv4);
+
+    // step 2 - shortest overlap
+
+    function distsq(x, y) {
+        var dx = tv4.x - x;
+        var dy = tv4.y - y;
+        return dx*dx + dy*dy;
+    }
+
+    var d1sq = distsq(s1.x, s1.y);
+    var d2sq = distsq(s1.x + d1.x, s1.y + d1.y);
+    var d3sq = distsq(s2.x, s2.y);
+    var d4sq = distsq(s2.x + d2.x, s2.y + d2.y);
+
+    var best = d1sq;
+    var line = 1;
+    var dir  = 1;
+
+    if (d2sq < best) {
+        best = d2sq;
+        dir = -1;
+    }
+
+    if (d3sq < best) {
+        best = d3sq;
+        line = 2;
+        dir = 1;
+    }
+
+    if (d4sq < best) {
+        best = d4sq;
+        line = 2;
+        dir = -1;
+    }
+
+    // step 3 - adjust by shortest overlap
+
+    var mtv = result.mtv;
+    if (line === 1) {
+        vec2.normalize(d1, mtv);
+        mtv.mul_(-dir * sqrt(best));
+    } else {
+        vec2.normalize(d2, mtv);
+        mtv.mul_(dir * sqrt(best));
+    }
 
     return true;
-
-
-    // var denom = ((e1.x - s1.x) * (e2.y - s2.y)) - ((e1.y - s1.y) * (e2.x - s2.x));
-    // if (denom == 0) return;
-
-    // var n1    = ((s1.y - s2.y) * (e2.x - s2.x)) - ((s1.x - s2.x) * (e2.y - s2.y)),
-    //     r     = n1 / denom,
-    //     n2    = ((s1.y - s2.y) * (e1.x - s1.x)) - ((s1.x - s2.x) * (e1.y - s1.y)),
-    //     s     = n2 / denom;
-
-    // if (seg1 && (r < 0 || r > 1)) return false;
-    // if (seg2 && (s < 0 || s > 1)) return false;
-
-    // if (seg2) {
-
-    //     tv3.x = s1.x + (r * (e1.x - s1.x));
-    //     tv3.y = s1.y + (r * (e1.y - s1.y));
-
-    //     var lineLength = s2.distance(e2);
-    //     var overlap = tv3.distance(s2);
-
-    //     vec2.sub(e2, s2, result.mtv);
-    //     result.mtv.normalize_();
-
-    //     if (overlap < lineLength / 2) {
-    //         result.mtv.mul_(overlap);
-    //     } else {
-    //         result.mtv.mul_(-(lineLength - overlap));
-    //     }
-
-    // } else {
-
-    //     // line cannot be moved out of collision so just leave it be!
-    //     result.mtv.x = 0;
-    //     result.mtv.y = 0;
-
-    // }
-
-    // return true;
 
 }
