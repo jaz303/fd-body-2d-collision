@@ -12,6 +12,7 @@ exports.Result = Result;
 // Temporary storage for calculations
 var tv1 = vec2.zero();
 var tv2 = vec2.zero();
+var tv3 = vec2.zero();
 
 /**
  * Check for collisions between i1 and i2
@@ -193,8 +194,34 @@ function AABB_circle(p1, b1, p2, b2, result) {
 
 }
 
-function AABB_lineSegment(obj1, obj2, result) {
+function AABB_lineSegment(p1, b1, p2, b2, result) {
+
+    // tv1 := AABB horizontal
+    tv1.x = b1.width;
+    tv1.y = 0;
+
+    if (_collideLineSegments(p1, tv1, p2, b2.size, result)) return true;
+
+    // tv2 := AABB bottom left
+    tv2.x = p1.x;
+    tv2.y = p1.y + b1.height;
+
+    if (_collideLineSegments(tv2, tv1, p2, b2.size, result)) return true;
+
+    // tv1 := AABB vertical
+    tv1.x = 0;
+    tv1.y = b1.height;
+
+    if (_collideLineSegments(p1, tv1, p2, b2.size, result)) return true;
+
+    // tv2 := AABB top right
+    tv2.x = p1.x + b1.width;
+    tv2.y = p1.y;
+
+    if (_collideLineSegments(tv2, tv1, p2, b2.size, result)) return true;
+
     return false;
+
 }
 
 function circle_circle(p1, b1, p2, b2, result) {
@@ -248,6 +275,72 @@ function circle_lineSegment(circle, segment, result) {
 
 };
 
-function lineSegment_lineSegment(obj1, obj2, result) {
-    return false;
+function lineSegment_lineSegment(p1, b1, p2, b2, result) {
+    return _collideLineSegments(p1, b1.size, p2, b2.size, result);
+}
+
+//
+// Internal
+
+function _collideLineSegments(s1, d1, s2, d2, result) {
+
+    var cross = d1.x * d2.y - d1.y * d2.x;
+
+    if (cross === 0) {
+        return false;
+    }
+
+    vec2.sub(s2, s1, tv3);
+
+    var t = (tv3.x * d2.y - tv3.y * d2.x) / cross;
+    if (t < 0 || t > 1) return false;
+
+    var u = (tv3.x * d1.y - tv3.y * d1.x) / cross;
+    if (u < 0 || u > 1) return false;
+
+    //     intersection = a1 + t * b;
+
+    result.mtv.x = result.mtv.y = 0;
+
+    return true;
+
+
+    // var denom = ((e1.x - s1.x) * (e2.y - s2.y)) - ((e1.y - s1.y) * (e2.x - s2.x));
+    // if (denom == 0) return;
+
+    // var n1    = ((s1.y - s2.y) * (e2.x - s2.x)) - ((s1.x - s2.x) * (e2.y - s2.y)),
+    //     r     = n1 / denom,
+    //     n2    = ((s1.y - s2.y) * (e1.x - s1.x)) - ((s1.x - s2.x) * (e1.y - s1.y)),
+    //     s     = n2 / denom;
+
+    // if (seg1 && (r < 0 || r > 1)) return false;
+    // if (seg2 && (s < 0 || s > 1)) return false;
+
+    // if (seg2) {
+
+    //     tv3.x = s1.x + (r * (e1.x - s1.x));
+    //     tv3.y = s1.y + (r * (e1.y - s1.y));
+
+    //     var lineLength = s2.distance(e2);
+    //     var overlap = tv3.distance(s2);
+
+    //     vec2.sub(e2, s2, result.mtv);
+    //     result.mtv.normalize_();
+
+    //     if (overlap < lineLength / 2) {
+    //         result.mtv.mul_(overlap);
+    //     } else {
+    //         result.mtv.mul_(-(lineLength - overlap));
+    //     }
+
+    // } else {
+
+    //     // line cannot be moved out of collision so just leave it be!
+    //     result.mtv.x = 0;
+    //     result.mtv.y = 0;
+
+    // }
+
+    // return true;
+
 }
