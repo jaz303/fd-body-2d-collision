@@ -80,7 +80,7 @@ function checkCollision(i1, i2, result) {
         }
     } else if (b1.type === T.BODY_LINE_SEGMENT) {
         if (b2.type === T.BODY_LINE_SEGMENT) {
-            colliding = lineSegment_lineSegment(p1, b1, p2, b2, result);
+            colliding = lineSegment_lineSegment(p1, b1.size, p2, b2.size, result);
         }
     }
 
@@ -197,29 +197,29 @@ function AABB_circle(p1, b1, p2, b2, result) {
 
 function AABB_lineSegment(p1, b1, p2, b2, result) {
 
-    // tv1 := AABB horizontal
-    tv1.x = b1.width;
-    tv1.y = 0;
+    // // tv1 := AABB horizontal
+    // tv1.x = b1.width;
+    // tv1.y = 0;
 
-    if (_collideLineSegments(p1, tv1, p2, b2.size, result)) return true;
+    // if (_collideLineSegments(p1, tv1, p2, b2.size, result)) return true;
 
-    // tv2 := AABB bottom left
-    tv2.x = p1.x;
-    tv2.y = p1.y + b1.height;
+    // // tv2 := AABB bottom left
+    // tv2.x = p1.x;
+    // tv2.y = p1.y + b1.height;
 
-    if (_collideLineSegments(tv2, tv1, p2, b2.size, result)) return true;
+    // if (_collideLineSegments(tv2, tv1, p2, b2.size, result)) return true;
 
-    // tv1 := AABB vertical
-    tv1.x = 0;
-    tv1.y = b1.height;
+    // // tv1 := AABB vertical
+    // tv1.x = 0;
+    // tv1.y = b1.height;
 
-    if (_collideLineSegments(p1, tv1, p2, b2.size, result)) return true;
+    // if (_collideLineSegments(p1, tv1, p2, b2.size, result)) return true;
 
-    // tv2 := AABB top right
-    tv2.x = p1.x + b1.width;
-    tv2.y = p1.y;
+    // // tv2 := AABB top right
+    // tv2.x = p1.x + b1.width;
+    // tv2.y = p1.y;
 
-    if (_collideLineSegments(tv2, tv1, p2, b2.size, result)) return true;
+    // if (_collideLineSegments(tv2, tv1, p2, b2.size, result)) return true;
 
     return false;
 
@@ -276,20 +276,71 @@ function circle_lineSegment(circle, segment, result) {
 
 };
 
-function lineSegment_lineSegment(p1, b1, p2, b2, result) {
-    return _collideLineSegments(p1, b1.size, p2, b2.size, result);
+function lineSegment_lineSegment(s1, d1, s2, d2, result) {
+
+    if (_intersectLineSegments(s1, d1, s2, d2, tv4)) {
+
+        // step 2 - shortest overlap
+
+        function distsq(x, y) {
+            var dx = tv4.x - x;
+            var dy = tv4.y - y;
+            return dx*dx + dy*dy;
+        }
+
+        var d1sq = distsq(s1.x, s1.y);
+        var d2sq = distsq(s1.x + d1.x, s1.y + d1.y);
+        var d3sq = distsq(s2.x, s2.y);
+        var d4sq = distsq(s2.x + d2.x, s2.y + d2.y);
+
+        var best = d1sq;
+        var line = 1;
+        var dir  = 1;
+
+        if (d2sq < best) {
+            best = d2sq;
+            dir = -1;
+        }
+
+        if (d3sq < best) {
+            best = d3sq;
+            line = 2;
+            dir = 1;
+        }
+
+        if (d4sq < best) {
+            best = d4sq;
+            line = 2;
+            dir = -1;
+        }
+
+        // step 3 - adjust by shortest overlap
+
+        var mtv = result.mtv;
+        if (line === 1) {
+            vec2.normalize(d1, mtv);
+            mtv.mul_(-dir * sqrt(best));
+        } else {
+            vec2.normalize(d2, mtv);
+            mtv.mul_(dir * sqrt(best));
+        }
+
+        return true;
+
+    } else {
+
+        return false;
+
+    }
+
 }
 
 //
 // Internal
 
-// TODO: this function should test for an intersection and store the
-// point of intersection in result vector.
-// Then main collision test calculate the mtv (which isn't always needed)
-function _collideLineSegments(s1, d1, s2, d2, result) {
+function _intersectLineSegments(s1, d1, s2, d2, intersection) {
 
     var cross = d1.x * d2.y - d1.y * d2.x;
-
     if (cross === 0) {
         return false;
     }
@@ -302,55 +353,8 @@ function _collideLineSegments(s1, d1, s2, d2, result) {
     var u = (tv3.x * d1.y - tv3.y * d1.x) / cross;
     if (u < 0 || u > 1) return false;
 
-    // Calculate mtv
-
-    // step 1 - intersection point
-    
-    vec2.adjust(s1, d1, t, tv4);
-
-    // step 2 - shortest overlap
-
-    function distsq(x, y) {
-        var dx = tv4.x - x;
-        var dy = tv4.y - y;
-        return dx*dx + dy*dy;
-    }
-
-    var d1sq = distsq(s1.x, s1.y);
-    var d2sq = distsq(s1.x + d1.x, s1.y + d1.y);
-    var d3sq = distsq(s2.x, s2.y);
-    var d4sq = distsq(s2.x + d2.x, s2.y + d2.y);
-
-    var best = d1sq;
-    var line = 1;
-    var dir  = 1;
-
-    if (d2sq < best) {
-        best = d2sq;
-        dir = -1;
-    }
-
-    if (d3sq < best) {
-        best = d3sq;
-        line = 2;
-        dir = 1;
-    }
-
-    if (d4sq < best) {
-        best = d4sq;
-        line = 2;
-        dir = -1;
-    }
-
-    // step 3 - adjust by shortest overlap
-
-    var mtv = result.mtv;
-    if (line === 1) {
-        vec2.normalize(d1, mtv);
-        mtv.mul_(-dir * sqrt(best));
-    } else {
-        vec2.normalize(d2, mtv);
-        mtv.mul_(dir * sqrt(best));
+    if (intersection) {
+        vec2.adjust(s1, d1, t, intersection);
     }
 
     return true;
