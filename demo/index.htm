@@ -4,6 +4,14 @@
 <head>
   <title>2D Collision Demo</title>
   <style type='text/css'>
+    html, body { margin: 0; padding: 0; }
+    body { padding: 10px; }
+    p {
+      margin: 0 0 10px 0;
+    }
+    body {
+      font: 12px monospace;
+    }
     canvas {
       border: 1px solid #c0c0c0;
     }
@@ -15,6 +23,7 @@
   <script src='bundle.js'></script>
 </head>
 <body onload='init();'>
-  <canvas id='canvas' width='800' height='600' tabindex='0'></canvas>
+  <p>Left-click to move selected object towards mouse, press 'n' to cycle selected object</p>
+  <canvas id='canvas' width='600' height='500' tabindex='0'></canvas>
 </body>
 </html>
